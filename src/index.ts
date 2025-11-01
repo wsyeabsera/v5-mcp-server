@@ -107,8 +107,8 @@ app.post('/sse', async (req: Request, res: Response) => {
       }
 
       try {
-        const validatedArgs = tool.inputSchema.parse(params?.arguments || {});
-        const result = await tool.handler(validatedArgs);
+        // Handler does validation internally
+        const result = await tool.handler(params?.arguments || {});
         
         return res.json({
           jsonrpc: '2.0',

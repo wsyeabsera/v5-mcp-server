@@ -1,17 +1,43 @@
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { Contract } from '../models/index.js';
+
+// Define schemas
+const createContractSchema = z.object({
+  producerName: z.string().describe('Producer name'),
+  debitorName: z.string().describe('Debitor name'),
+  wasteCode: z.string().describe('Waste code'),
+});
+
+const getContractSchema = z.object({
+  id: z.string().describe('Contract ID'),
+});
+
+const listContractsSchema = z.object({
+  producerName: z.string().optional().describe('Filter by producer name'),
+  debitorName: z.string().optional().describe('Filter by debitor name'),
+  wasteCode: z.string().optional().describe('Filter by waste code'),
+});
+
+const updateContractSchema = z.object({
+  id: z.string().describe('Contract ID'),
+  producerName: z.string().optional().describe('Producer name'),
+  debitorName: z.string().optional().describe('Debitor name'),
+  wasteCode: z.string().optional().describe('Waste code'),
+});
+
+const deleteContractSchema = z.object({
+  id: z.string().describe('Contract ID'),
+});
 
 export const contractTools = {
   create_contract: {
     description: 'Create a new contract',
-    inputSchema: z.object({
-      producerName: z.string().describe('Producer name'),
-      debitorName: z.string().describe('Debitor name'),
-      wasteCode: z.string().describe('Waste code'),
-    }),
-    handler: async (args: { producerName: string; debitorName: string; wasteCode: string }) => {
+    inputSchema: zodToJsonSchema(createContractSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof createContractSchema>) => {
       try {
-        const contract = await Contract.create(args);
+        const validatedArgs = createContractSchema.parse(args);
+        const contract = await Contract.create(validatedArgs);
         return {
           content: [
             {
@@ -36,12 +62,11 @@ export const contractTools = {
 
   get_contract: {
     description: 'Get a contract by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Contract ID'),
-    }),
-    handler: async (args: { id: string }) => {
+    inputSchema: zodToJsonSchema(getContractSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getContractSchema>) => {
       try {
-        const contract = await Contract.findById(args.id);
+        const validatedArgs = getContractSchema.parse(args);
+        const contract = await Contract.findById(validatedArgs.id);
         if (!contract) {
           return {
             content: [
@@ -77,17 +102,14 @@ export const contractTools = {
 
   list_contracts: {
     description: 'List all contracts with optional filters',
-    inputSchema: z.object({
-      producerName: z.string().optional().describe('Filter by producer name'),
-      debitorName: z.string().optional().describe('Filter by debitor name'),
-      wasteCode: z.string().optional().describe('Filter by waste code'),
-    }),
-    handler: async (args: { producerName?: string; debitorName?: string; wasteCode?: string }) => {
+    inputSchema: zodToJsonSchema(listContractsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listContractsSchema>) => {
       try {
+        const validatedArgs = listContractsSchema.parse(args);
         const filter: any = {};
-        if (args.producerName) filter.producerName = { $regex: args.producerName, $options: 'i' };
-        if (args.debitorName) filter.debitorName = { $regex: args.debitorName, $options: 'i' };
-        if (args.wasteCode) filter.wasteCode = args.wasteCode;
+        if (validatedArgs.producerName) filter.producerName = { $regex: validatedArgs.producerName, $options: 'i' };
+        if (validatedArgs.debitorName) filter.debitorName = { $regex: validatedArgs.debitorName, $options: 'i' };
+        if (validatedArgs.wasteCode) filter.wasteCode = validatedArgs.wasteCode;
 
         const contracts = await Contract.find(filter);
         return {
@@ -114,25 +136,16 @@ export const contractTools = {
 
   update_contract: {
     description: 'Update a contract by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Contract ID'),
-      producerName: z.string().optional().describe('Producer name'),
-      debitorName: z.string().optional().describe('Debitor name'),
-      wasteCode: z.string().optional().describe('Waste code'),
-    }),
-    handler: async (args: {
-      id: string;
-      producerName?: string;
-      debitorName?: string;
-      wasteCode?: string;
-    }) => {
+    inputSchema: zodToJsonSchema(updateContractSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof updateContractSchema>) => {
       try {
+        const validatedArgs = updateContractSchema.parse(args);
         const updateData: any = {};
-        if (args.producerName) updateData.producerName = args.producerName;
-        if (args.debitorName) updateData.debitorName = args.debitorName;
-        if (args.wasteCode) updateData.wasteCode = args.wasteCode;
+        if (validatedArgs.producerName) updateData.producerName = validatedArgs.producerName;
+        if (validatedArgs.debitorName) updateData.debitorName = validatedArgs.debitorName;
+        if (validatedArgs.wasteCode) updateData.wasteCode = validatedArgs.wasteCode;
 
-        const contract = await Contract.findByIdAndUpdate(args.id, updateData, { new: true });
+        const contract = await Contract.findByIdAndUpdate(validatedArgs.id, updateData, { new: true });
         if (!contract) {
           return {
             content: [
@@ -168,12 +181,11 @@ export const contractTools = {
 
   delete_contract: {
     description: 'Delete a contract by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Contract ID'),
-    }),
-    handler: async (args: { id: string }) => {
+    inputSchema: zodToJsonSchema(deleteContractSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof deleteContractSchema>) => {
       try {
-        const contract = await Contract.findByIdAndDelete(args.id);
+        const validatedArgs = deleteContractSchema.parse(args);
+        const contract = await Contract.findByIdAndDelete(validatedArgs.id);
         if (!contract) {
           return {
             content: [
@@ -207,4 +219,3 @@ export const contractTools = {
     },
   },
 };
-

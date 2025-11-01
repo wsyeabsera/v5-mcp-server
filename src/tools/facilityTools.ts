@@ -1,17 +1,42 @@
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { Facility } from '../models/index.js';
+
+// Define schemas
+const createFacilitySchema = z.object({
+  name: z.string().describe('Facility name'),
+  shortCode: z.string().describe('Facility short code'),
+  location: z.string().describe('Facility location'),
+});
+
+const getFacilitySchema = z.object({
+  id: z.string().describe('Facility ID'),
+});
+
+const listFacilitiesSchema = z.object({
+  shortCode: z.string().optional().describe('Filter by short code'),
+  location: z.string().optional().describe('Filter by location'),
+});
+
+const updateFacilitySchema = z.object({
+  id: z.string().describe('Facility ID'),
+  name: z.string().optional().describe('Facility name'),
+  shortCode: z.string().optional().describe('Facility short code'),
+  location: z.string().optional().describe('Facility location'),
+});
+
+const deleteFacilitySchema = z.object({
+  id: z.string().describe('Facility ID'),
+});
 
 export const facilityTools = {
   create_facility: {
     description: 'Create a new facility',
-    inputSchema: z.object({
-      name: z.string().describe('Facility name'),
-      shortCode: z.string().describe('Facility short code'),
-      location: z.string().describe('Facility location'),
-    }),
-    handler: async (args: { name: string; shortCode: string; location: string }) => {
+    inputSchema: zodToJsonSchema(createFacilitySchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof createFacilitySchema>) => {
       try {
-        const facility = await Facility.create(args);
+        const validatedArgs = createFacilitySchema.parse(args);
+        const facility = await Facility.create(validatedArgs);
         return {
           content: [
             {
@@ -36,12 +61,11 @@ export const facilityTools = {
 
   get_facility: {
     description: 'Get a facility by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Facility ID'),
-    }),
-    handler: async (args: { id: string }) => {
+    inputSchema: zodToJsonSchema(getFacilitySchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getFacilitySchema>) => {
+      const validatedArgs = getFacilitySchema.parse(args);
       try {
-        const facility = await Facility.findById(args.id);
+        const facility = await Facility.findById(validatedArgs.id);
         if (!facility) {
           return {
             content: [
@@ -77,15 +101,13 @@ export const facilityTools = {
 
   list_facilities: {
     description: 'List all facilities with optional filters',
-    inputSchema: z.object({
-      shortCode: z.string().optional().describe('Filter by short code'),
-      location: z.string().optional().describe('Filter by location'),
-    }),
-    handler: async (args: { shortCode?: string; location?: string }) => {
+    inputSchema: zodToJsonSchema(listFacilitiesSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listFacilitiesSchema>) => {
+      const validatedArgs = listFacilitiesSchema.parse(args);
       try {
         const filter: any = {};
-        if (args.shortCode) filter.shortCode = args.shortCode;
-        if (args.location) filter.location = { $regex: args.location, $options: 'i' };
+        if (validatedArgs.shortCode) filter.shortCode = validatedArgs.shortCode;
+        if (validatedArgs.location) filter.location = { $regex: validatedArgs.location, $options: 'i' };
 
         const facilities = await Facility.find(filter);
         return {
@@ -112,20 +134,16 @@ export const facilityTools = {
 
   update_facility: {
     description: 'Update a facility by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Facility ID'),
-      name: z.string().optional().describe('Facility name'),
-      shortCode: z.string().optional().describe('Facility short code'),
-      location: z.string().optional().describe('Facility location'),
-    }),
-    handler: async (args: { id: string; name?: string; shortCode?: string; location?: string }) => {
+    inputSchema: zodToJsonSchema(updateFacilitySchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof updateFacilitySchema>) => {
+      const validatedArgs = updateFacilitySchema.parse(args);
       try {
         const updateData: any = {};
-        if (args.name) updateData.name = args.name;
-        if (args.shortCode) updateData.shortCode = args.shortCode;
-        if (args.location) updateData.location = args.location;
+        if (validatedArgs.name) updateData.name = validatedArgs.name;
+        if (validatedArgs.shortCode) updateData.shortCode = validatedArgs.shortCode;
+        if (validatedArgs.location) updateData.location = validatedArgs.location;
 
-        const facility = await Facility.findByIdAndUpdate(args.id, updateData, { new: true });
+        const facility = await Facility.findByIdAndUpdate(validatedArgs.id, updateData, { new: true });
         if (!facility) {
           return {
             content: [
@@ -161,12 +179,11 @@ export const facilityTools = {
 
   delete_facility: {
     description: 'Delete a facility by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Facility ID'),
-    }),
-    handler: async (args: { id: string }) => {
+    inputSchema: zodToJsonSchema(deleteFacilitySchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof deleteFacilitySchema>) => {
+      const validatedArgs = deleteFacilitySchema.parse(args);
       try {
-        const facility = await Facility.findByIdAndDelete(args.id);
+        const facility = await Facility.findByIdAndDelete(validatedArgs.id);
         if (!facility) {
           return {
             content: [

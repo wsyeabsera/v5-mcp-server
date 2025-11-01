@@ -1,37 +1,59 @@
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { Contaminant } from '../models/index.js';
 
 const levelEnum = z.enum(['low', 'medium', 'high']);
 
+// Define schemas
+const createContaminantSchema = z.object({
+  wasteItemDetected: z.string().describe('Waste item detected'),
+  material: z.string().describe('Material type'),
+  facilityId: z.string().describe('Facility ID'),
+  detection_time: z.string().describe('Detection time (ISO 8601 format)'),
+  explosive_level: levelEnum.describe('Explosive level'),
+  hcl_level: levelEnum.describe('HCl level'),
+  so2_level: levelEnum.describe('SO2 level'),
+  estimated_size: z.number().describe('Estimated size'),
+  shipment_id: z.string().describe('Shipment ID'),
+});
+
+const getContaminantSchema = z.object({
+  id: z.string().describe('Contaminant ID'),
+});
+
+const listContaminantsSchema = z.object({
+  facilityId: z.string().optional().describe('Filter by facility ID'),
+  shipment_id: z.string().optional().describe('Filter by shipment ID'),
+  material: z.string().optional().describe('Filter by material'),
+});
+
+const updateContaminantSchema = z.object({
+  id: z.string().describe('Contaminant ID'),
+  wasteItemDetected: z.string().optional().describe('Waste item detected'),
+  material: z.string().optional().describe('Material type'),
+  facilityId: z.string().optional().describe('Facility ID'),
+  detection_time: z.string().optional().describe('Detection time (ISO 8601 format)'),
+  explosive_level: levelEnum.optional().describe('Explosive level'),
+  hcl_level: levelEnum.optional().describe('HCl level'),
+  so2_level: levelEnum.optional().describe('SO2 level'),
+  estimated_size: z.number().optional().describe('Estimated size'),
+  shipment_id: z.string().optional().describe('Shipment ID'),
+});
+
+const deleteContaminantSchema = z.object({
+  id: z.string().describe('Contaminant ID'),
+});
+
 export const contaminantTools = {
   create_contaminant: {
     description: 'Create a new contaminant record',
-    inputSchema: z.object({
-      wasteItemDetected: z.string().describe('Waste item detected'),
-      material: z.string().describe('Material type'),
-      facilityId: z.string().describe('Facility ID'),
-      detection_time: z.string().describe('Detection time (ISO 8601 format)'),
-      explosive_level: levelEnum.describe('Explosive level'),
-      hcl_level: levelEnum.describe('HCl level'),
-      so2_level: levelEnum.describe('SO2 level'),
-      estimated_size: z.number().describe('Estimated size'),
-      shipment_id: z.string().describe('Shipment ID'),
-    }),
-    handler: async (args: {
-      wasteItemDetected: string;
-      material: string;
-      facilityId: string;
-      detection_time: string;
-      explosive_level: string;
-      hcl_level: string;
-      so2_level: string;
-      estimated_size: number;
-      shipment_id: string;
-    }) => {
+    inputSchema: zodToJsonSchema(createContaminantSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof createContaminantSchema>) => {
       try {
+        const validatedArgs = createContaminantSchema.parse(args);
         const contaminant = await Contaminant.create({
-          ...args,
-          detection_time: new Date(args.detection_time),
+          ...validatedArgs,
+          detection_time: new Date(validatedArgs.detection_time),
         });
         return {
           content: [
@@ -57,12 +79,11 @@ export const contaminantTools = {
 
   get_contaminant: {
     description: 'Get a contaminant by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Contaminant ID'),
-    }),
-    handler: async (args: { id: string }) => {
+    inputSchema: zodToJsonSchema(getContaminantSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getContaminantSchema>) => {
       try {
-        const contaminant = await Contaminant.findById(args.id).populate('facilityId');
+        const validatedArgs = getContaminantSchema.parse(args);
+        const contaminant = await Contaminant.findById(validatedArgs.id).populate('facilityId');
         if (!contaminant) {
           return {
             content: [
@@ -98,17 +119,14 @@ export const contaminantTools = {
 
   list_contaminants: {
     description: 'List all contaminants with optional filters',
-    inputSchema: z.object({
-      facilityId: z.string().optional().describe('Filter by facility ID'),
-      shipment_id: z.string().optional().describe('Filter by shipment ID'),
-      material: z.string().optional().describe('Filter by material'),
-    }),
-    handler: async (args: { facilityId?: string; shipment_id?: string; material?: string }) => {
+    inputSchema: zodToJsonSchema(listContaminantsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listContaminantsSchema>) => {
       try {
+        const validatedArgs = listContaminantsSchema.parse(args);
         const filter: any = {};
-        if (args.facilityId) filter.facilityId = args.facilityId;
-        if (args.shipment_id) filter.shipment_id = args.shipment_id;
-        if (args.material) filter.material = { $regex: args.material, $options: 'i' };
+        if (validatedArgs.facilityId) filter.facilityId = validatedArgs.facilityId;
+        if (validatedArgs.shipment_id) filter.shipment_id = validatedArgs.shipment_id;
+        if (validatedArgs.material) filter.material = { $regex: validatedArgs.material, $options: 'i' };
 
         const contaminants = await Contaminant.find(filter).populate('facilityId');
         return {
@@ -135,26 +153,17 @@ export const contaminantTools = {
 
   update_contaminant: {
     description: 'Update a contaminant by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Contaminant ID'),
-      wasteItemDetected: z.string().optional().describe('Waste item detected'),
-      material: z.string().optional().describe('Material type'),
-      detection_time: z.string().optional().describe('Detection time (ISO 8601 format)'),
-      explosive_level: levelEnum.optional().describe('Explosive level'),
-      hcl_level: levelEnum.optional().describe('HCl level'),
-      so2_level: levelEnum.optional().describe('SO2 level'),
-      estimated_size: z.number().optional().describe('Estimated size'),
-      shipment_id: z.string().optional().describe('Shipment ID'),
-    }),
-    handler: async (args: any) => {
+    inputSchema: zodToJsonSchema(updateContaminantSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof updateContaminantSchema>) => {
       try {
-        const updateData: any = { ...args };
+        const validatedArgs = updateContaminantSchema.parse(args);
+        const updateData: any = { ...validatedArgs };
         delete updateData.id;
-        if (args.detection_time) {
-          updateData.detection_time = new Date(args.detection_time);
+        if (validatedArgs.detection_time) {
+          updateData.detection_time = new Date(validatedArgs.detection_time);
         }
 
-        const contaminant = await Contaminant.findByIdAndUpdate(args.id, updateData, { new: true });
+        const contaminant = await Contaminant.findByIdAndUpdate(validatedArgs.id, updateData, { new: true });
         if (!contaminant) {
           return {
             content: [
@@ -190,12 +199,11 @@ export const contaminantTools = {
 
   delete_contaminant: {
     description: 'Delete a contaminant by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Contaminant ID'),
-    }),
-    handler: async (args: { id: string }) => {
+    inputSchema: zodToJsonSchema(deleteContaminantSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof deleteContaminantSchema>) => {
       try {
-        const contaminant = await Contaminant.findByIdAndDelete(args.id);
+        const validatedArgs = deleteContaminantSchema.parse(args);
+        const contaminant = await Contaminant.findByIdAndDelete(validatedArgs.id);
         if (!contaminant) {
           return {
             content: [

@@ -1,32 +1,54 @@
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { Shipment } from '../models/index.js';
+
+// Define schemas
+const createShipmentSchema = z.object({
+  entry_timestamp: z.string().describe('Entry timestamp (ISO 8601 format)'),
+  exit_timestamp: z.string().describe('Exit timestamp (ISO 8601 format)'),
+  source: z.string().describe('Shipment source'),
+  facilityId: z.string().describe('Facility ID'),
+  license_plate: z.string().describe('License plate'),
+  contract_reference_id: z.string().describe('Contract reference ID'),
+  contractId: z.string().describe('Contract ID'),
+});
+
+const getShipmentSchema = z.object({
+  id: z.string().describe('Shipment ID'),
+});
+
+const listShipmentsSchema = z.object({
+  facilityId: z.string().optional().describe('Filter by facility ID'),
+  contractId: z.string().optional().describe('Filter by contract ID'),
+  license_plate: z.string().optional().describe('Filter by license plate'),
+  source: z.string().optional().describe('Filter by source'),
+});
+
+const updateShipmentSchema = z.object({
+  id: z.string().describe('Shipment ID'),
+  entry_timestamp: z.string().optional().describe('Entry timestamp (ISO 8601 format)'),
+  exit_timestamp: z.string().optional().describe('Exit timestamp (ISO 8601 format)'),
+  source: z.string().optional().describe('Shipment source'),
+  license_plate: z.string().optional().describe('License plate'),
+  contract_reference_id: z.string().optional().describe('Contract reference ID'),
+  contractId: z.string().optional().describe('Contract ID'),
+});
+
+const deleteShipmentSchema = z.object({
+  id: z.string().describe('Shipment ID'),
+});
 
 export const shipmentTools = {
   create_shipment: {
     description: 'Create a new shipment',
-    inputSchema: z.object({
-      entry_timestamp: z.string().describe('Entry timestamp (ISO 8601 format)'),
-      exit_timestamp: z.string().describe('Exit timestamp (ISO 8601 format)'),
-      source: z.string().describe('Shipment source'),
-      facilityId: z.string().describe('Facility ID'),
-      license_plate: z.string().describe('License plate'),
-      contract_reference_id: z.string().describe('Contract reference ID'),
-      contractId: z.string().describe('Contract ID'),
-    }),
-    handler: async (args: {
-      entry_timestamp: string;
-      exit_timestamp: string;
-      source: string;
-      facilityId: string;
-      license_plate: string;
-      contract_reference_id: string;
-      contractId: string;
-    }) => {
+    inputSchema: zodToJsonSchema(createShipmentSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof createShipmentSchema>) => {
       try {
+        const validatedArgs = createShipmentSchema.parse(args);
         const shipment = await Shipment.create({
-          ...args,
-          entry_timestamp: new Date(args.entry_timestamp),
-          exit_timestamp: new Date(args.exit_timestamp),
+          ...validatedArgs,
+          entry_timestamp: new Date(validatedArgs.entry_timestamp),
+          exit_timestamp: new Date(validatedArgs.exit_timestamp),
         });
         return {
           content: [
@@ -52,12 +74,11 @@ export const shipmentTools = {
 
   get_shipment: {
     description: 'Get a shipment by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Shipment ID'),
-    }),
-    handler: async (args: { id: string }) => {
+    inputSchema: zodToJsonSchema(getShipmentSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof getShipmentSchema>) => {
       try {
-        const shipment = await Shipment.findById(args.id).populate('facilityId');
+        const validatedArgs = getShipmentSchema.parse(args);
+        const shipment = await Shipment.findById(validatedArgs.id).populate('facilityId');
         if (!shipment) {
           return {
             content: [
@@ -93,24 +114,15 @@ export const shipmentTools = {
 
   list_shipments: {
     description: 'List all shipments with optional filters',
-    inputSchema: z.object({
-      facilityId: z.string().optional().describe('Filter by facility ID'),
-      contractId: z.string().optional().describe('Filter by contract ID'),
-      license_plate: z.string().optional().describe('Filter by license plate'),
-      source: z.string().optional().describe('Filter by source'),
-    }),
-    handler: async (args: {
-      facilityId?: string;
-      contractId?: string;
-      license_plate?: string;
-      source?: string;
-    }) => {
+    inputSchema: zodToJsonSchema(listShipmentsSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof listShipmentsSchema>) => {
       try {
+        const validatedArgs = listShipmentsSchema.parse(args);
         const filter: any = {};
-        if (args.facilityId) filter.facilityId = args.facilityId;
-        if (args.contractId) filter.contractId = args.contractId;
-        if (args.license_plate) filter.license_plate = args.license_plate;
-        if (args.source) filter.source = { $regex: args.source, $options: 'i' };
+        if (validatedArgs.facilityId) filter.facilityId = validatedArgs.facilityId;
+        if (validatedArgs.contractId) filter.contractId = validatedArgs.contractId;
+        if (validatedArgs.license_plate) filter.license_plate = validatedArgs.license_plate;
+        if (validatedArgs.source) filter.source = { $regex: validatedArgs.source, $options: 'i' };
 
         const shipments = await Shipment.find(filter).populate('facilityId');
         return {
@@ -137,27 +149,20 @@ export const shipmentTools = {
 
   update_shipment: {
     description: 'Update a shipment by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Shipment ID'),
-      entry_timestamp: z.string().optional().describe('Entry timestamp (ISO 8601 format)'),
-      exit_timestamp: z.string().optional().describe('Exit timestamp (ISO 8601 format)'),
-      source: z.string().optional().describe('Shipment source'),
-      license_plate: z.string().optional().describe('License plate'),
-      contract_reference_id: z.string().optional().describe('Contract reference ID'),
-      contractId: z.string().optional().describe('Contract ID'),
-    }),
-    handler: async (args: any) => {
+    inputSchema: zodToJsonSchema(updateShipmentSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof updateShipmentSchema>) => {
       try {
-        const updateData: any = { ...args };
+        const validatedArgs = updateShipmentSchema.parse(args);
+        const updateData: any = { ...validatedArgs };
         delete updateData.id;
-        if (args.entry_timestamp) {
-          updateData.entry_timestamp = new Date(args.entry_timestamp);
+        if (validatedArgs.entry_timestamp) {
+          updateData.entry_timestamp = new Date(validatedArgs.entry_timestamp);
         }
-        if (args.exit_timestamp) {
-          updateData.exit_timestamp = new Date(args.exit_timestamp);
+        if (validatedArgs.exit_timestamp) {
+          updateData.exit_timestamp = new Date(validatedArgs.exit_timestamp);
         }
 
-        const shipment = await Shipment.findByIdAndUpdate(args.id, updateData, { new: true });
+        const shipment = await Shipment.findByIdAndUpdate(validatedArgs.id, updateData, { new: true });
         if (!shipment) {
           return {
             content: [
@@ -193,12 +198,11 @@ export const shipmentTools = {
 
   delete_shipment: {
     description: 'Delete a shipment by ID',
-    inputSchema: z.object({
-      id: z.string().describe('Shipment ID'),
-    }),
-    handler: async (args: { id: string }) => {
+    inputSchema: zodToJsonSchema(deleteShipmentSchema, { $refStrategy: 'none' }),
+    handler: async (args: z.infer<typeof deleteShipmentSchema>) => {
       try {
-        const shipment = await Shipment.findByIdAndDelete(args.id);
+        const validatedArgs = deleteShipmentSchema.parse(args);
+        const shipment = await Shipment.findByIdAndDelete(validatedArgs.id);
         if (!shipment) {
           return {
             content: [
@@ -232,4 +236,3 @@ export const shipmentTools = {
     },
   },
 };
-
