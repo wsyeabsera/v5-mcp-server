@@ -12,12 +12,12 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://your-domain.com',
-  baseUrl: '/',
+  url: 'https://wsyeabsera.github.io',
+  baseUrl: '/v5-mcp-server/',
 
   // GitHub pages deployment config
-  organizationName: 'your-org',
-  projectName: 'mcp-server',
+  organizationName: 'wsyeabsera',
+  projectName: 'v5-mcp-server',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
