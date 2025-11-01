@@ -6,10 +6,13 @@ A Model Context Protocol (MCP) server built with TypeScript and Mongoose for man
 
 - **HTTP + SSE Transport**: Accessible over the internet via URL
 - **5 Collections**: Facilities, Contaminants, Inspections, Shipments, and Contracts
-- **25 CRUD Tools**: Full create, read, update, delete, and list operations for each collection
+- **30+ Tools**: Full CRUD operations plus AI-powered intelligent tools
+- **MCP Sampling Support**: AI-assisted analysis and decision making
 - **Mongoose ODM**: Schema validation and relationships between collections
 - **TypeScript**: Type-safe development
 - **RESTful Health Checks**: Monitor server and database status
+- **4 Prompts**: Pre-configured prompts for AI-assisted workflows
+- **Dynamic Resources**: Real-time data access via MCP resources
 
 ## Prerequisites
 
@@ -129,6 +132,76 @@ Configure the client to connect to the SSE endpoint: `http://your-server-url:300
 - `list_contracts` - List all contracts with optional filters
 - `update_contract` - Update contract by ID
 - `delete_contract` - Delete contract by ID
+
+## AI-Powered Tools with Sampling
+
+The server now includes **MCP Sampling** capabilities, allowing tools to request AI assistance during execution. These intelligent tools combine database queries with AI analysis to provide actionable insights.
+
+### Intelligent Analysis Tools (3 tools)
+
+#### `generate_intelligent_facility_report`
+Generate comprehensive facility reports with AI-powered health scores, risk assessments, and recommendations.
+
+**Parameters:**
+- `facilityId` (required) - Facility to analyze
+- `includeRecommendations` (optional) - Include AI-generated recommendations
+
+**What it provides:**
+- Overall facility health score (0-100)
+- Top concerns and risk areas
+- Compliance risk level assessment
+- Actionable recommendations
+- Comprehensive metrics and historical data
+
+#### `analyze_shipment_risk`
+Perform AI-powered risk assessment for shipments based on contamination history and patterns.
+
+**Parameters:**
+- `shipmentId` (required) - Shipment to analyze
+
+**What it provides:**
+- AI-generated risk score (0-100)
+- Risk factors and reasoning
+- Source history analysis
+- Recommended actions
+- Detailed contamination breakdown
+
+#### `suggest_inspection_questions`
+Generate customized inspection checklists using AI elicitation and analysis.
+
+**Parameters:**
+- `facilityId` (required) - Facility to generate questions for
+
+**What it provides:**
+- AI-selected focus area (contamination, acceptance, processing, or compliance)
+- Customized inspection questions (5-7 targeted questions)
+- Facility-specific metrics and concerns
+- Additional notes based on risk indicators
+
+### How Sampling Works
+
+When you call these tools, the server:
+1. Fetches relevant data from MongoDB
+2. Requests AI analysis from the connected MCP client
+3. Combines raw data with AI insights
+4. Returns comprehensive, actionable results
+
+**Example:**
+```json
+{
+  "name": "generate_intelligent_facility_report",
+  "arguments": {
+    "facilityId": "65f1234567890abcdef12345",
+    "includeRecommendations": true
+  }
+}
+```
+
+### Learn More
+
+- **[Sampling Guide](docs/docs/guides/sampling-guide.md)** - Detailed guide on using AI-powered tools
+- **[Testing Instructions](SAMPLING_TEST_INSTRUCTIONS.md)** - Step-by-step testing with MCP Inspector
+- **[MCP Specification](https://spec.modelcontextprotocol.io/specification/client/sampling/)** - Official sampling documentation
 
 ## Data Models
 

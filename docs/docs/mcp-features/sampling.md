@@ -839,10 +839,102 @@ async function analyzeViaWebhook(data: any) {
 }
 ```
 
+## Implemented Sampling Tools
+
+This server includes **three production-ready AI-powered tools** that demonstrate sampling capabilities:
+
+### 1. Generate Intelligent Facility Report
+
+**Tool:** `generate_intelligent_facility_report`
+
+Creates comprehensive facility analysis with AI health scores, risk levels, and recommendations.
+
+```typescript
+// Example usage
+const report = await callTool('generate_intelligent_facility_report', {
+  facilityId: '6905db9211cc522275d5f013',
+  includeRecommendations: true
+});
+
+// Returns:
+// - Health score (0-100)
+// - Top 3 concerns
+// - Compliance risk level
+// - Actionable recommendations
+// - Full metrics and data
+```
+
+**[Full API Documentation →](../api/sampling-tools/generate-facility-report.md)**
+
+### 2. Analyze Shipment Risk
+
+**Tool:** `analyze_shipment_risk`
+
+Performs AI-powered risk assessment for shipments based on contamination patterns.
+
+```typescript
+// Example usage
+const assessment = await callTool('analyze_shipment_risk', {
+  shipmentId: '6905db9211cc522275d5f018'
+});
+
+// Returns:
+// - Risk score (0-100)
+// - Risk reasoning
+// - Specific risk factors
+// - Recommended actions
+// - Detailed contaminant data
+```
+
+**[Full API Documentation →](../api/sampling-tools/analyze-shipment-risk.md)**
+
+### 3. Suggest Inspection Questions
+
+**Tool:** `suggest_inspection_questions`
+
+Generates customized inspection checklists using AI elicitation.
+
+```typescript
+// Example usage
+const checklist = await callTool('suggest_inspection_questions', {
+  facilityId: '6905db9211cc522275d5f013'
+});
+
+// Returns:
+// - AI-selected focus area
+// - 5-7 targeted questions
+// - Facility metrics
+// - Context-specific notes
+```
+
+**[Full API Documentation →](../api/sampling-tools/suggest-inspection-questions.md)**
+
+### Testing the Tools
+
+You can test these tools immediately using the MCP Inspector:
+
+```bash
+# Start server
+npm run dev
+
+# Open Inspector
+npx @modelcontextprotocol/inspector http://localhost:3000/sse
+```
+
+Then select any of the three tools and provide the required parameters. The tools will:
+1. Fetch data from MongoDB
+2. Request AI analysis via sampling
+3. Combine data + insights
+4. Return comprehensive results
+
+**[View Complete Examples →](../examples/ai-analysis.md)**
+
 ## Related Resources
 
 - [MCP Prompts](./prompts.md) - Workflow templates
 - [MCP Resources](./resources.md) - Readable data endpoints
+- [Sampling Guide](../guides/sampling-guide.md) - Detailed implementation guide
+- [AI-Powered Tools API](../api/sampling-tools/overview.md) - Complete API reference
 - [Best Practices](../guides/best-practices.md) - General MCP guidelines
 - [Architecture Overview](../architecture/overview.md) - System design
 

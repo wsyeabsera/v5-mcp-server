@@ -9,10 +9,12 @@ import {
   inspectionTools,
   shipmentTools,
   contractTools,
+  samplingTools,
 } from './tools/index.js';
 import { logger } from './utils/logger.js';
 import { prompts, generatePromptMessages } from './prompts/index.js';
 import { listResources, readResource } from './resources/index.js';
+import { setSamplingCallback, SamplingRequest, SamplingResponse } from './utils/sampling.js';
 
 // Create Express app
 const app = express();
@@ -22,6 +24,76 @@ app.use(express.json());
 // Connect to MongoDB
 await connectDB(config.mongoUri);
 
+// Set up sampling callback for testing
+// In a production environment, this would integrate with the MCP client's sampling capability
+// For now, we'll use a mock implementation that provides reasonable AI-like responses
+setSamplingCallback(async (request: SamplingRequest): Promise<SamplingResponse> => {
+  logger.info(`[Sampling] Processing request: ${request.id}`);
+  
+  const userMessage = request.params.messages[0]?.content?.text || '';
+  
+  // Mock AI responses based on prompt content
+  let responseText = '';
+  
+  if (userMessage.includes('health score') || userMessage.includes('Overall health score')) {
+    responseText = `Based on the facility data analysis:
+
+1. **Overall Health Score: 78/100**
+   - Good acceptance rate indicates proper waste handling
+   - Moderate contamination levels require attention
+   - Generally compliant operations with room for improvement
+
+2. **Top 3 Concerns:**
+   - Increasing contamination detection trends in recent shipments
+   - Some high-risk contaminants requiring immediate attention
+   - Occasional compliance issues with waste type specifications
+
+3. **Compliance Risk Level: MEDIUM**
+   - Current operations meet basic requirements
+   - Some areas need enhanced monitoring
+   - Proactive measures recommended to prevent escalation
+
+${request.params.messages[0]?.content?.text.includes('recommendations') ? `4. **3 Actionable Recommendations:**
+   - Implement enhanced pre-screening for high-risk sources
+   - Increase staff training on contamination identification
+   - Establish monthly compliance review meetings` : ''}`;
+  } else if (userMessage.includes('risk level') || userMessage.includes('Assess risk')) {
+    responseText = `{
+  "score": 65,
+  "reasoning": "Moderate risk level due to detected contaminants and source history. The presence of high-risk materials and limited historical data from this source warrant enhanced scrutiny. Recommended actions include thorough inspection and source verification."
+}`;
+  } else if (userMessage.includes('which area needs most attention') || userMessage.includes('Options:')) {
+    responseText = `A) Contamination levels
+
+The facility shows a pattern of contamination detections that warrants focused attention. While other metrics are stable, addressing contamination proactively will prevent future compliance issues and operational disruptions.`;
+  } else if (userMessage.includes('inspection questions') || userMessage.includes('checklist')) {
+    responseText = `1. Are contamination detection systems functioning properly and calibrated?
+2. What protocols are currently in place for handling high-risk contamination events?
+3. Review recent contamination logs - are there emerging patterns by source or waste type?
+4. Verify that staff members are trained on the latest contamination identification procedures
+5. Check segregation procedures for contaminated waste streams
+6. Assess the effectiveness of supplier communication regarding contamination prevention
+7. Review documentation procedures for contamination incidents`;
+  } else {
+    // Generic analysis response
+    responseText = `Analysis of the provided data:
+
+The facility demonstrates operational competency with areas for improvement. Key observations include stable processing metrics, manageable contamination levels, and generally compliant operations. Continued monitoring and proactive management are recommended to maintain and improve performance standards.
+
+Specific attention should be paid to contamination trends, acceptance criteria consistency, and ongoing staff training to ensure sustained compliance and operational excellence.`;
+  }
+  
+  return {
+    role: 'assistant',
+    content: {
+      type: 'text',
+      text: responseText,
+    },
+    model: 'mock-ai-model',
+    stopReason: 'endTurn',
+  };
+});
+
 // Combine all tools
 const allTools = {
   ...facilityTools,
@@ -29,6 +101,7 @@ const allTools = {
   ...inspectionTools,
   ...shipmentTools,
   ...contractTools,
+  ...samplingTools,
 };
 
 // Simple HTTP MCP endpoint (handles JSON-RPC directly)
@@ -67,7 +140,8 @@ app.post('/sse', async (req: Request, res: Response) => {
             resources: {
               subscribe: false,
               listChanged: false
-            }
+            },
+            sampling: {}
           },
         },
         id,

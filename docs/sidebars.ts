@@ -99,6 +99,16 @@ const sidebars: SidebarsConfig = {
             'api/contracts/delete-contract',
           ],
         },
+        {
+          type: 'category',
+          label: 'AI-Powered Tools',
+          items: [
+            'api/sampling-tools/overview',
+            'api/sampling-tools/generate-facility-report',
+            'api/sampling-tools/analyze-shipment-risk',
+            'api/sampling-tools/suggest-inspection-questions',
+          ],
+        },
       ],
     },
   ],
