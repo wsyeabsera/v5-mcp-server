@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
       label: 'MCP Features',
       collapsed: false,
       items: [
+        'mcp-features/overview',
         'mcp-features/prompts',
         'mcp-features/resources',
         'mcp-features/sampling',
