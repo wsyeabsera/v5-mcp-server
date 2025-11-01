@@ -23,7 +23,7 @@
 6. Restart Cursor
 
 ### Option 2: Manual Configuration
-
+ 
 Edit your Cursor MCP config file:
 
 **macOS/Linux**: `~/.cursor/mcp.json`  
