@@ -11,6 +11,8 @@ import {
   contractTools,
 } from './tools/index.js';
 import { logger } from './utils/logger.js';
+import { prompts, generatePromptMessages } from './prompts/index.js';
+import { listResources, readResource } from './resources/index.js';
 
 // Create Express app
 const app = express();
@@ -61,6 +63,11 @@ app.post('/sse', async (req: Request, res: Response) => {
           },
           capabilities: {
             tools: {},
+            prompts: {},
+            resources: {
+              subscribe: false,
+              listChanged: false
+            }
           },
         },
         id,
@@ -127,6 +134,98 @@ app.post('/sse', async (req: Request, res: Response) => {
               },
             ],
             isError: true,
+          },
+          id,
+        });
+      }
+    }
+
+    // Handle prompts/list
+    if (method === 'prompts/list') {
+      logger.info('[MCP] Handling prompts/list');
+      return res.json({
+        jsonrpc: '2.0',
+        result: {
+          prompts: Object.values(prompts)
+        },
+        id,
+      });
+    }
+
+    // Handle prompts/get
+    if (method === 'prompts/get') {
+      const promptName = params?.name;
+      logger.info(`[MCP] Handling prompts/get for: ${promptName}`);
+
+      const prompt = prompts[promptName as keyof typeof prompts];
+      
+      if (!prompt) {
+        return res.json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32602,
+            message: `Unknown prompt: ${promptName}`
+          },
+          id,
+        });
+      }
+
+      // Generate prompt messages based on arguments
+      const args = params?.arguments || {};
+      const messages = generatePromptMessages(promptName, args);
+
+      return res.json({
+        jsonrpc: '2.0',
+        result: {
+          description: prompt.description,
+          messages
+        },
+        id,
+      });
+    }
+
+    // Handle resources/list
+    if (method === 'resources/list') {
+      logger.info('[MCP] Handling resources/list');
+      try {
+        const result = await listResources();
+        return res.json({
+          jsonrpc: '2.0',
+          result,
+          id,
+        });
+      } catch (error: any) {
+        logger.error('[MCP] Error listing resources:', error);
+        return res.json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32603,
+            message: `Error listing resources: ${error.message}`
+          },
+          id,
+        });
+      }
+    }
+
+    // Handle resources/read
+    if (method === 'resources/read') {
+      const uri = params?.uri;
+      logger.info(`[MCP] Handling resources/read for: ${uri}`);
+
+      try {
+        const result = await readResource(uri);
+        return res.json({
+          jsonrpc: '2.0',
+          result,
+          id,
+        });
+      } catch (error: any) {
+        logger.error(`[MCP] Error reading resource ${uri}:`, error);
+        return res.json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32602,
+            message: error.message
           },
           id,
         });

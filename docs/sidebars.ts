@@ -109,6 +109,9 @@ const sidebars: SidebarsConfig = {
       label: 'Guides',
       collapsed: false,
       items: [
+        'guides/client-execution-flow',
+        'guides/sampling-guide',
+        'guides/elicitation-patterns',
         'guides/mcp-inspector',
         'guides/cursor-integration',
         'guides/workflows',
