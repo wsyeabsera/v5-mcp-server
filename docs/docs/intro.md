@@ -10,6 +10,7 @@ The MCP Server is a **TypeScript-based HTTP server** that exposes waste manageme
 
 - **25 CRUD Operations**: Full create, read, update, and delete operations across 5 collections
 - **MCP Protocol**: Standards-compliant Model Context Protocol implementation
+- **Advanced MCP Features**: Prompts for workflow templates, Resources for direct data access, and Sampling for AI-powered analysis
 - **Type-Safe**: Built with TypeScript and Mongoose for robust type checking
 - **Easy Integration**: Works with Cursor, MCP Inspector, and any MCP-compatible client
 - **MongoDB Backend**: Reliable, scalable NoSQL database storage
@@ -83,6 +84,16 @@ Ready to get started? Here are your next steps:
 2. **[Quick Start](/getting-started/quick-start)** - Run your first queries in 5 minutes
 3. **[Architecture Overview](/architecture/overview)** - Understand how it works
 4. **[API Reference](/api/overview)** - Explore all available tools
+
+## Advanced MCP Features
+
+Take your MCP server to the next level with these powerful features:
+
+1. **[Prompts](/mcp-features/prompts)** - Create reusable workflow templates for common tasks
+2. **[Resources](/mcp-features/resources)** - Expose readable data for efficient AI access
+3. **[Sampling](/mcp-features/sampling)** - Enable server-initiated AI analysis and generation
+
+These features transform your server from a simple data interface into an intelligent, proactive system.
 
 ## Need Help?
 

@@ -24,6 +24,16 @@ const sidebars: SidebarsConfig = {
         'architecture/request-flow',
       ],
     },
+    {
+      type: 'category',
+      label: 'MCP Features',
+      collapsed: false,
+      items: [
+        'mcp-features/prompts',
+        'mcp-features/resources',
+        'mcp-features/sampling',
+      ],
+    },
   ],
 
   api: [
